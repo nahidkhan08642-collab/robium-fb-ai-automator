@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FB Multi-Model AI Automator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%); }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center bg-gray-900 border border-amber-500/30 rounded-2xl p-6 mb-6 shadow-2xl">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black text-amber-400 tracking-wider flex items-center gap-3">
+                    <i class="fa-solid fa-robot text-amber-500"></i> FB Multi-Model AI Automator
+                </h1>
+                <p class="text-sm text-gray-400 mt-1">Autonomous Multi-AI Pipeline (Scout, Writer, Optimizer, Vision)</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center gap-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span class="w-2 h-2 mr-2 bg-emerald-400 rounded-full animate-pulse"></span> Multi-AI Active
+                </span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Configuration Panel -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl">
+                <h2 class="text-lg font-bold text-amber-300 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-gear"></i> Page & API Setup
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Facebook Page ID</label>
+                        <input type="text" id="page-id" value="{{ config.page_id }}" placeholder="e.g. 1237613292776083" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none text-gray-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Permanent Access Token</label>
+                        <input type="password" id="access-token" value="{{ config.access_token }}" placeholder="EAA..." class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none text-gray-200">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Default Video URL</label>
+                        <input type="text" id="video-url" placeholder="https://example.com/video.mp4" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none text-gray-200">
+                    </div>
+                    <button onclick="saveConfig()" class="w-full gold-gradient text-gray-950 font-bold py-3 rounded-xl text-sm shadow-lg hover:opacity-95 transition cursor-pointer">
+                        Save Configuration
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multi-AI Task Generator Panel -->
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-amber-300 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-brain"></i> Multi-AI Content Studio
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Topic / Niche Prompt for AI</label>
+                            <input type="text" id="ai-prompt" value="Epic Anime Battle & Plot Twist" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none text-gray-200">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Generated AI Caption & Hashtags</label>
+                            <textarea id="ai-caption-output" rows="3" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2 text-sm text-amber-200 focus:outline-none resize-none" placeholder="AI generated content will appear here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="runAiGeneration()" class="bg-gray-800 border border-amber-500/40 text-amber-300 font-bold py-2.5 rounded-xl text-xs hover:bg-gray-700 transition cursor-pointer">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Run Multi-AI
+                    </button>
+                    <button onclick="postToFacebook()" class="gold-gradient text-gray-950 font-bold py-2.5 rounded-xl text-xs shadow-lg hover:opacity-95 transition cursor-pointer">
+                        <i class="fa-solid fa-paper-plane"></i> Publish Reel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Execution Status Log -->
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 shadow-xl">
+            <h2 class="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wider">Live System & Multi-AI Activity Log</h2>
+            <div id="status-log" class="bg-gray-950 border border-gray-800 rounded-xl p-4 font-mono text-xs text-emerald-400 h-32 overflow-y-auto">
+                [SYSTEM READY] Multi-Model AI Orchestrator initialized successfully. Waiting for user command...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function logMsg(msg) {
+            const log = document.getElementById('status-log');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${time}] ${msg}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        async function saveConfig() {
+            const page_id = document.getElementById('page-id').value.trim();
+            const access_token = document.getElementById('access-token').value.trim();
+            try {
+                const res = await fetch('/api/save-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({page_id, access_token})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    logMsg("✅ Configuration saved successfully.");
+                    alert(data.message);
+                } else {
+                    alert(data.message);
+                }
+            } catch(e) {
+                logMsg("❌ Error saving configuration.");
+            }
+        }
+
+        async function runAiGeneration() {
+            const prompt = document.getElementById('ai-prompt').value.trim();
+            logMsg("🤖 [Gemini-Scout & Claude-Writer] Analyzing prompt and generating viral caption...");
+            try {
+                const res = await fetch('/api/generate-ai-caption', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({prompt})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    document.getElementById('ai-caption-output').value = data.caption;
+                    logMsg(`✨ [AI Success] Generated via model: ${data.caption.slice(0, 40)}...`);
+                }
+            } catch(e) {
+                logMsg("❌ AI generation failed.");
+            }
+        }
+
+        async function postToFacebook() {
+            const video_url = document.getElementById('video-url').value.trim();
+            const caption = document.getElementById('ai-caption-output').value.trim();
+            logMsg("🚀 Sending request to Facebook Graph API for automated Reel publishing...");
+            try {
+                const res = await fetch('/api/post-video', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({video_url, caption})
+                });
+                const data = await res.json();
+                if(res.ok) {
+                    logMsg(`🎉 SUCCESS! Posted to Facebook. Post ID: ${data.post_id}`);
+                    alert(data.message);
+                } else {
+                    logMsg(`❌ Facebook Publish Error: ${data.message}`);
+                    alert(data.message);
+                }
+            } catch(e) {
+                logMsg("❌ Network error during publishing.");
+            }
+        }
+    </script>
+</body>
+</html>
