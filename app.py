@@ -106,12 +106,12 @@ def save_history(history):
 
 def weekly_storage_cleanup_and_ai_audit():
     """
-    Weekly Storage Cleanup & 100-Model AI Health Audit & Self-Healing Agent:
+    Weekly Storage Cleanup & 120-Model AI Health Audit & Self-Healing Agent:
     Runs every Friday at 12:30 AM.
     1. Purges old storage logs.
-    2. Runs comprehensive health audit across all 100 AI models (10 per category).
+    2. Runs comprehensive health audit across all 120 AI models.
     """
-    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 100-Model AI Health Audit...")
+    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 120-Model AI Health Audit...")
     
     # 1. Storage cleanup
     history = load_history()
@@ -122,7 +122,7 @@ def weekly_storage_cleanup_and_ai_audit():
     else:
         print("[STORAGE-CLEANUP] Storage is already clean.")
         
-    # 2. AI Model Health Audit & Self-Healing across 100 models
+    # 2. AI Model Health Audit & Self-Healing across 120 models
     audit_res = ai_ensemble.audit_health_and_self_heal()
     print(f"[AI-HEALTH-AUDIT] {audit_res}")
     print("[MAINTENANCE] Friday maintenance completed successfully.")
@@ -131,7 +131,7 @@ def automated_post_job():
     """
     Automated execution job: Runs every 4 hours (6 posts per day per page)
     during USA Prime-Time windows, strictly for Anime videos in English,
-    utilizing 10-model redundancy across all 10 task categories (100 total models).
+    utilizing 10-model redundancy across 10 core task categories + 20 dedicated self-healing models (120 total models).
     """
     cfg = load_config()
     pages = cfg.get("pages", [])
@@ -181,15 +181,22 @@ def automated_post_job():
         # Step 8: Post Verification (10 models)
         success = ai_ensemble.verify_post_success(res_data)
 
-        history = load_history()
-        history.append({
+        post_result_record = {
             "timestamp": time.time(),
             "page_name": page_name,
             "page_id": page_id,
             "video_url": video_url,
             "success": success,
             "response": res_data
-        })
+        }
+
+        # Step 9: Post-Execution Self-Healing & Diagnostic Cycle (20 Dedicated Self-Healing Models)
+        # Runs automatically immediately after EVERY video post completion.
+        self_healing_report = ai_ensemble.run_post_execution_self_healing(page_name, post_result_record)
+        print(f"[{self_healing_report['model_used']}] Post-Execution Self-Healing completed for {page_name} -> Status: {self_healing_report['diagnostic_status']}")
+
+        history = load_history()
+        history.append(post_result_record)
         save_history(history[-200:])
         print(f"[Automator] {page_name} post result -> Success: {success}")
 
@@ -198,7 +205,7 @@ def run_scheduler():
     schedule.every(4).hours.do(automated_post_job)
     # Weekly Friday 12:30 AM maintenance
     schedule.every().friday.at("00:30").do(weekly_storage_cleanup_and_ai_audit)
-    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 100 specialized AI models (10 per task category).")
+    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 120 specialized AI models (100 core + 20 post-execution self-healing).")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -217,7 +224,7 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 100-Model AI configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 120-Model AI configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
@@ -249,6 +256,9 @@ def api_post_video():
 
     res_data = ai_ensemble.execute_publishing(page_id, token, video_url or "https://www.w3schools.com/html/mov_bbb.mp4", caption)
     success = ai_ensemble.verify_post_success(res_data)
+    
+    post_res = {"success": success, "response": res_data}
+    ai_ensemble.run_post_execution_self_healing(page_name, post_res)
 
     if success:
         return jsonify({"status": "success", "post_id": res_data.get("id"), "message": f"Video published successfully to {page_name}!"})
