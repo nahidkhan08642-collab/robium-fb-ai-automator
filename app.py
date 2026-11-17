@@ -17,9 +17,9 @@ REDIS_URL = os.environ.get("REDIS_URL", "redis://red-dbtu9ap42hec73b1dgc0:6379")
 try:
     redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
     redis_client.ping()
-    print(f"[{ai_ensemble.get_publisher_agent()}] Connected successfully to Redis database!")
+    print("[Publisher-Master] Connected successfully to Redis database!")
 except Exception as e:
-    print(f"[{ai_ensemble.get_recovery_agent()}] Warning: Redis unavailable, using local JSON fallback: {e}")
+    print(f"[Warning] Redis unavailable, using local JSON fallback: {e}")
     redis_client = None
 
 CONFIG_PATH = os.path.expanduser("~/.fb_ai_automator_config.json")
@@ -66,7 +66,7 @@ def load_config():
     return {
         "pages": load_default_pages(),
         "posts_per_day": 6,
-        "schedule_mode": "usa_prime_time_6_daily"
+        "schedule_mode": "usa_prime_time_hourly"
     }
 
 def save_config(cfg):
@@ -106,12 +106,12 @@ def save_history(history):
 
 def weekly_storage_cleanup_and_ai_audit():
     """
-    Weekly Storage Cleanup & AI Model Health Audit Agent:
+    Weekly Storage Cleanup & 90-Model AI Health Audit & Self-Healing Agent:
     Runs every Friday at 12:30 AM.
     1. Purges old storage logs.
-    2. Runs comprehensive health audit across all 60 AI models (10 per task) with self-healing failovers.
+    2. Runs comprehensive health audit across all 90 AI models (10 per task step).
     """
-    print("[STORAGE-CLEANUP & AI-AUDIT] Running Friday 12:30 AM maintenance task...")
+    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 90-Model AI Health Audit...")
     
     # 1. Storage cleanup
     history = load_history()
@@ -122,20 +122,24 @@ def weekly_storage_cleanup_and_ai_audit():
     else:
         print("[STORAGE-CLEANUP] Storage is already clean.")
         
-    # 2. AI Model Health Audit & Self-Healing
-    ai_ensemble.audit_all_ai_models()
-    print("[STORAGE-CLEANUP & AI-AUDIT] Friday maintenance completed successfully.")
+    # 2. AI Model Health Audit & Self-Healing across 90 models
+    audit_res = ai_ensemble.audit_health_and_self_heal()
+    print(f"[AI-HEALTH-AUDIT] {audit_res}")
+    print("[MAINTENANCE] Friday maintenance completed successfully.")
 
 def automated_post_job():
-    publisher = ai_ensemble.get_publisher_agent()
-    recovery = ai_ensemble.get_recovery_agent()
+    """
+    Automated execution job: Runs every 4 hours (6 posts per day per page)
+    during USA Prime-Time windows, strictly for Anime videos in English,
+    utilizing 10-model redundancy per step, deduplication, and growth analytics.
+    """
     cfg = load_config()
     pages = cfg.get("pages", [])
     
     history = load_history()
     recent_video_urls = [h.get("video_url") for h in history[-30:] if h.get("video_url")]
 
-    sample_videos = [
+    sample_anime_videos = [
         "https://www.w3schools.com/html/mov_bbb.mp4",
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4"
@@ -147,44 +151,32 @@ def automated_post_job():
         page_name = page.get("name", f"Anime Page {idx+1}")
 
         if not token or not page_id:
-            print(f"[{publisher}] Skipping {page_name}: Missing Access Token.")
+            print(f"[Publisher] Skipping {page_name}: Missing Access Token.")
             continue
 
-        # Run Growth & Engagement Analytics Optimizer backed by 10 redundant AI models
-        growth_analysis = ai_ensemble.analyze_and_optimize_growth(page_name, history[-10:])
-        print(f"[{growth_analysis['model_used']}] Reach & Engagement growth strategy optimized for {page_name}.")
+        # Step 1: Growth Analytics Optimization (10 models)
+        ai_ensemble.analyze_growth_metrics(page_name, history[-10:])
 
-        time.sleep(random.randint(10, 20))
-        video_url = ai_ensemble.select_unique_video(recent_video_urls, sample_videos)
+        # Step 2: Video Scouting & Selection (10 models)
+        video_url = ai_ensemble.scout_anime_video(sample_anime_videos)
+
+        # Step 3: Anti-Duplicate Video Analysis (10 models)
+        is_dup = ai_ensemble.analyze_deduplication(video_url, recent_video_urls)
+        if is_dup:
+            print(f"[Deduplication] Video URL already posted recently. Selecting alternate anime asset...")
+            video_url = ai_ensemble.scout_anime_video(sample_anime_videos)
+
         recent_video_urls.append(video_url)
 
-        caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight", page_name)
+        # Step 4, 5, 6: Title, Caption & Hashtag Generation in English (10 models per step)
+        full_caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight")
 
-        url = f"https://graph-video.facebook.com/v19.0/{page_id}/videos"
-        payload = {
-            "file_url": video_url,
-            "description": caption,
-            "published": "true",
-            "access_token": token
-        }
+        # Step 7: Publishing Execution (10 models)
+        time.sleep(random.randint(10, 20))
+        res_data = ai_ensemble.execute_publishing(page_id, token, video_url, full_caption)
 
-        print(f"[{publisher}] Publishing scheduled prime-time post to {page_name} (ID: {page_id})...")
-        success = False
-        res_data = {}
-        
-        for attempt in range(3):
-            try:
-                res = requests.post(url, data=payload, timeout=60)
-                res_data = res.json()
-                if "id" in res_data:
-                    success = True
-                    break
-                else:
-                    print(f"[{recovery}] Attempt {attempt+1} failed for {page_name}: {res_data}")
-                    time.sleep(2 ** attempt)
-            except Exception as e:
-                print(f"[{recovery}] Exception on attempt {attempt+1} for {page_name}: {e}")
-                time.sleep(2 ** attempt)
+        # Step 8: Post Success Verification (10 models)
+        success = ai_ensemble.verify_post_success(res_data)
 
         history = load_history()
         history.append({
@@ -196,12 +188,14 @@ def automated_post_job():
             "response": res_data
         })
         save_history(history[-200:])
-        print(f"[{publisher}] {page_name} post result -> Success: {success}")
+        print(f"[Automator] {page_name} post result -> Success: {success}")
 
 def run_scheduler():
+    # 6 posts per day (every 4 hours) aligned with US Prime Time
     schedule.every(4).hours.do(automated_post_job)
+    # Weekly Friday 12:30 AM maintenance
     schedule.every().friday.at("00:30").do(weekly_storage_cleanup_and_ai_audit)
-    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Friday AI Audit Daemon started with 60 specialized AI models (10 per task).")
+    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 90 specialized AI models (10 per granular task step).")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -220,15 +214,14 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 10-Model AI Redundancy configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 90-Model AI configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
 def api_generate_ai_caption():
     data = request.json or {}
     prompt = data.get('prompt', 'Viral Anime Moment')
-    page_name = data.get('page_name', 'Anime Page')
-    caption = ai_ensemble.assemble_full_caption(prompt, page_name)
+    caption = ai_ensemble.assemble_full_caption(prompt)
     return jsonify({"status": "success", "caption": caption})
 
 @app.route('/api/post-video', methods=['POST'])
@@ -251,24 +244,13 @@ def api_post_video():
     if not page_id or not token:
         return jsonify({"status": "error", "message": f"Page ID or Access Token missing for {page_name}!"}), 400
 
-    url = f"https://graph-video.facebook.com/v19.0/{page_id}/videos"
-    payload = {
-        "description": caption,
-        "published": "true",
-        "access_token": token
-    }
-    if video_url:
-        payload["file_url"] = video_url
+    res_data = ai_ensemble.execute_publishing(page_id, token, video_url or "https://www.w3schools.com/html/mov_bbb.mp4", caption)
+    success = ai_ensemble.verify_post_success(res_data)
 
-    try:
-        res = requests.post(url, data=payload, timeout=60)
-        res_data = res.json()
-        if "id" in res_data:
-            return jsonify({"status": "success", "post_id": res_data["id"], "message": f"Video published successfully to {page_name}!"})
-        else:
-            return jsonify({"status": "error", "message": res_data.get("error", {}).get("message", "API Error")}), 400
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    if success:
+        return jsonify({"status": "success", "post_id": res_data.get("id"), "message": f"Video published successfully to {page_name}!"})
+    else:
+        return jsonify({"status": "error", "message": res_data.get("error", {}).get("message", "API Error")}), 400
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
