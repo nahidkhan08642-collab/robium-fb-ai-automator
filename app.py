@@ -106,14 +106,11 @@ def save_history(history):
 
 def weekly_storage_cleanup_and_ai_audit():
     """
-    Weekly Storage Cleanup & 120-Model AI Health Audit & Self-Healing Agent:
+    Weekly Storage Cleanup & 160-Model AI Health Audit & Self-Healing Agent:
     Runs every Friday at 12:30 AM.
-    1. Purges old storage logs.
-    2. Runs comprehensive health audit across all 120 AI models.
     """
-    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 120-Model AI Health Audit...")
+    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 160-Model AI Health Audit...")
     
-    # 1. Storage cleanup
     history = load_history()
     if len(history) > 50:
         trimmed = history[-50:]
@@ -122,7 +119,6 @@ def weekly_storage_cleanup_and_ai_audit():
     else:
         print("[STORAGE-CLEANUP] Storage is already clean.")
         
-    # 2. AI Model Health Audit & Self-Healing across 120 models
     audit_res = ai_ensemble.audit_health_and_self_heal()
     print(f"[AI-HEALTH-AUDIT] {audit_res}")
     print("[MAINTENANCE] Friday maintenance completed successfully.")
@@ -131,7 +127,7 @@ def automated_post_job():
     """
     Automated execution job: Runs every 4 hours (6 posts per day per page)
     during USA Prime-Time windows, strictly for Anime videos in English,
-    utilizing 10-model redundancy across 10 core task categories + 20 dedicated self-healing models (120 total models).
+    utilizing 160 specialized local AI models across all features.
     """
     cfg = load_config()
     pages = cfg.get("pages", [])
@@ -160,8 +156,16 @@ def automated_post_job():
         # Step 1: Growth Analytics Optimization (10 models)
         ai_ensemble.analyze_growth_metrics(page_name, history[-10:])
 
+        # Advanced Feature 1: AI Hook A/B Testing & Smart Rotation (10 models)
+        ab_res = ai_ensemble.run_hook_ab_testing(page_name)
+        print(f"[{ab_res['model_used']}] A/B Testing hook style selected: {ab_res['selected_hook_style']}")
+
         # Step 2: Video Sourcing (10 models)
         video_url = ai_ensemble.scout_anime_video(sample_anime_videos)
+
+        # Advanced Feature 4: Dynamic Subtitle & Frame Optimizer (10 models)
+        sub_res = ai_ensemble.run_subtitle_frame_optimizer(video_url)
+        print(f"[{sub_res['model_used']}] Subtitle & Frame optimization applied (FPS: {sub_res['fps']}, Resolution: {sub_res['resolution']})")
 
         # Step 3: Duplicate Prevention Analysis (10 models)
         is_dup = ai_ensemble.analyze_deduplication(video_url, recent_video_urls)
@@ -172,7 +176,7 @@ def automated_post_job():
         recent_video_urls.append(video_url)
 
         # Step 4, 5, 6: Title, Caption & Mention (@), and Hashtags in English (10 models per step)
-        full_caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight")
+        full_caption = ai_ensemble.assemble_full_caption(f"USA Prime-Time Viral Anime Highlight ({ab_res['selected_hook_style']})")
 
         # Step 7: Publisher Execution (10 models)
         time.sleep(random.randint(10, 20))
@@ -191,9 +195,16 @@ def automated_post_job():
         }
 
         # Step 9: Post-Execution Self-Healing & Diagnostic Cycle (20 Dedicated Self-Healing Models)
-        # Runs automatically immediately after EVERY video post completion.
         self_healing_report = ai_ensemble.run_post_execution_self_healing(page_name, post_result_record)
         print(f"[{self_healing_report['model_used']}] Post-Execution Self-Healing completed for {page_name} -> Status: {self_healing_report['diagnostic_status']}")
+
+        # Advanced Feature 2: Automated Comment Engagement Bot (10 models)
+        bot_res = ai_ensemble.run_comment_engagement_bot(page_name)
+        print(f"[{bot_res['model_used']}] Comment engagement bot active: Processed {bot_res['replies_processed']} replies.")
+
+        # Advanced Feature 3: Multi-Platform Repurposing Pipeline (10 models)
+        rep_res = ai_ensemble.run_multi_platform_repurposing(video_url, full_caption)
+        print(f"[{rep_res['model_used']}] Multi-Platform Repurposing synced to: {rep_res['platforms']}")
 
         history = load_history()
         history.append(post_result_record)
@@ -205,7 +216,7 @@ def run_scheduler():
     schedule.every(4).hours.do(automated_post_job)
     # Weekly Friday 12:30 AM maintenance
     schedule.every().friday.at("00:30").do(weekly_storage_cleanup_and_ai_audit)
-    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 120 specialized AI models (100 core + 20 post-execution self-healing).")
+    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 160 specialized AI models.")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -224,7 +235,7 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 120-Model AI configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 160-Model AI configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
@@ -259,6 +270,8 @@ def api_post_video():
     
     post_res = {"success": success, "response": res_data}
     ai_ensemble.run_post_execution_self_healing(page_name, post_res)
+    ai_ensemble.run_comment_engagement_bot(page_name)
+    ai_ensemble.run_multi_platform_repurposing(video_url, caption)
 
     if success:
         return jsonify({"status": "success", "post_id": res_data.get("id"), "message": f"Video published successfully to {page_name}!"})
