@@ -24,6 +24,30 @@ except Exception as e:
 
 CONFIG_PATH = os.path.expanduser("~/.fb_ai_automator_config.json")
 HISTORY_PATH = os.path.expanduser("~/.fb_ai_automator_history.json")
+TOKENS_JSON_PATH = os.path.expanduser("~/permanent_page_tokens.json")
+
+def load_default_pages():
+    if os.path.exists(TOKENS_JSON_PATH):
+        try:
+            with open(TOKENS_JSON_PATH, "r") as f:
+                data = json.load(f)
+                pages = []
+                for pid, info in data.items():
+                    pages.append({
+                        "name": info.get("name", "Anime Page"),
+                        "page_id": pid,
+                        "access_token": info.get("permanent_token", "")
+                    })
+                return pages
+        except:
+            pass
+    return [
+        {"name": "Anime world lover", "page_id": "1240263435841497", "access_token": "EAAfml573upUBSt96RoQhyZCR4d7nvO1DZBlwTIzud8pQpkif6qfv8ngFrwyfELD2iZBVmnhFtWZBnwTx044oHeG5btq5cgQYZAr9jDfoBoWJrtfPO8rjfAZABPfkNvo5Qb6cmTckGYcBWc3HdALCiY9hcQBmVRaCZBBje9kQZAbCbOidH8ZBMNUpJsyxlKste2wny3SAVDVV5"},
+        {"name": "anime world", "page_id": "963922040147989", "access_token": "EAAtOZBWbGMWkBSg4XuNlJs2lS5R4TysTO91QKHr2NceRZB2C35XqDRPDYysu4SmCZCcFo4LpaZBsomuiCarvhXYYVsGVAQF5jwXuZAXZCz1MDCHKfvH61G6OvQAFbYFCXw9pZAl4mM6nNJNyYaIkAwe1Q7LYP7rZCtfot5wHyxK7ysYhUJi9HM0mLCUA0VzP2ZAZCvXl6gAhYg"},
+        {"name": "Quarrelsome cover", "page_id": "110244978515347", "access_token": "EAAtOZBWbGMWkBSjcevJgliGvbdoBGGrOp7LQR08ZCklnJOaF6rQTI2qJlvFyrLahsXD91viNhZC49ysMFQWUBXmZBwFB9NZAUi4YbQjgRxh7TY3NKog7BNsfdBZBeKu8lwkNpGcoWLaHVY5SBzrNEV8NYHHESvGs9TwEZBbG0mDJGiyZCYYfI3wGy2df820uUz1EQGw3Ib4ZD"},
+        {"name": "anime lover", "page_id": "1046094275254219", "access_token": "EAAYgiB7ZAQ4MBSoH2EljZCaHi2Be08xhy4hgsPqALySTInJj6eZCf2CgVzZBZA5l2tXD6inkusa01jAC6VfaYxO4XPiWkwzmZBl8L2g90GhpwiFstBO0Qe2hqhn81hZAuIYKxcThP3MHjBSINhDCgZASoIqtfkhJcFRCZCln6IZC8px8umJCbQl3pDBWgVAwVNr8POllZA1Y7xM"},
+        {"name": "Rifat Islam", "page_id": "1089498234242779", "access_token": "EAAYgiB7ZAQ4MBSg1wvDSDkGUY09O0GOaBBF5wP3wJkdKBBggGtmrSHk2vmSDpnERfO1OWNPl50lGQQBNy1dBOZAZCpm9AzZBemVZCbgy7aYLxzdn6AJOKINnBA1m8gGS8k6i7K262doGsuVCYk2quofAf0Esn6fhi5GJbnZAWDRGZC98t7BBZAYgC9NUxrpnkKYB5sGL6rHZB"}
+    ]
 
 def load_config():
     if redis_client:
@@ -40,17 +64,7 @@ def load_config():
         except:
             pass
     return {
-        "pages": [
-            {
-                "name": "Robiul Islam (Anime Main)", 
-                "page_id": "1237613292776083", 
-                "access_token": "EAAV6Q3eZBaxgBSbVHPqvXCqTkXnOuZAw9Fxf4NfzgyVv0C3pjs4CDPzj4ulasREx1QdCrMRn8jlsscMcEh0vMLmMmHgiYEXKuvkg3m77kUJJCSNDJf7IZAGbzxbirshephFAZCBTI1rmvYIRNq7vXG9ZAyfLDJViCEZBA40gDcyJvvJEFTI7qGJIu2vZAXOj7f8CMMLJZBJ9"
-            },
-            {"name": "Anime Page 2", "page_id": "", "access_token": ""},
-            {"name": "Anime Page 3", "page_id": "", "access_token": ""},
-            {"name": "Anime Page 4", "page_id": "", "access_token": ""},
-            {"name": "Anime Page 5", "page_id": "", "access_token": ""}
-        ],
+        "pages": load_default_pages(),
         "posts_per_day": 6,
         "schedule_mode": "usa_prime_time_6_daily"
     }
@@ -188,7 +202,7 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Anime Pages configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
