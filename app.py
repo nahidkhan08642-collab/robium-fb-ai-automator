@@ -127,6 +127,12 @@ def automated_post_job():
     history = load_history()
     recent_video_urls = [h.get("video_url") for h in history[-30:] if h.get("video_url")]
 
+    sample_videos = [
+        "https://www.w3schools.com/html/mov_bbb.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4"
+    ]
+
     for idx, page in enumerate(pages):
         page_id = page.get("page_id")
         token = page.get("access_token")
@@ -136,8 +142,12 @@ def automated_post_job():
             print(f"[{publisher}] Skipping {page_name}: Missing Access Token.")
             continue
 
+        # Run Growth & Engagement Analytics Optimizer for this page before posting
+        growth_analysis = ai_ensemble.analyze_and_optimize_growth(page_name, history[-10:])
+        print(f"[{growth_analysis['model_used']}] Growth strategy optimized for {page_name}.")
+
         time.sleep(random.randint(10, 20))
-        video_url = ai_ensemble.select_unique_video(recent_video_urls)
+        video_url = ai_ensemble.select_unique_video(recent_video_urls, sample_videos)
         recent_video_urls.append(video_url)
 
         caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight", page_name)
@@ -183,7 +193,7 @@ def automated_post_job():
 def run_scheduler():
     schedule.every(4).hours.do(automated_post_job)
     schedule.every().friday.at("00:30").do(weekly_storage_cleanup)
-    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Weekly Storage Cleanup Daemon started.")
+    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Weekly Storage Cleanup Daemon started with 10-Model AI Ensembles.")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -202,7 +212,7 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & Growth AI configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
