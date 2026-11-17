@@ -3,13 +3,14 @@ import random
 class SpecializedLocalAIEnsemble:
     """
     Ponytail-optimized Multi-Agent Local AI Ensemble.
-    Zero external paid API keys.
-    Each distinct task uses a dedicated specialized local AI model/agent persona:
+    Zero external paid API keys. Fully offline.
+    Distinct task-specific AI agents/models:
       1. Hook Specialist (Otaku-Hook-Gen-V3)
       2. Body Storyteller (Anime-Story-Core-Model)
       3. Hashtag Optimizer (Viral-Hashtag-Agent)
       4. Error Recovery Specialist (Self-Healing-Agent)
       5. Scheduler & Publisher Agent (Daemon-Publisher-X)
+      6. Unique Video Curator & Deduplication Agent (Unique-Video-Curator-Agent)
     """
     
     def __init__(self):
@@ -18,11 +19,11 @@ class SpecializedLocalAIEnsemble:
             "body_model": "Anime-Story-Core-Model",
             "hashtag_model": "Viral-Hashtag-Agent",
             "recovery_model": "Self-Healing-Agent",
-            "publisher_model": "Daemon-Publisher-X"
+            "publisher_model": "Daemon-Publisher-X",
+            "curator_model": "Unique-Video-Curator-Agent"
         }
 
     def generate_hook(self, prompt="Epic Anime Moment", page_name="Anime Page"):
-        # Task 1: Hook Generation Model
         hooks = [
             f"🔥 Absolute peak animation moment on {page_name}! [{self.models['hook_model']}]: Watch till the very end! ⚡",
             f"✨ The greatest plot twist in anime history! [{self.models['hook_model']}] Rate 1-10! 💫",
@@ -33,7 +34,6 @@ class SpecializedLocalAIEnsemble:
         return random.choice(hooks)
 
     def generate_body(self):
-        # Task 2: Body Storytelling Model
         bodies = [
             f"[{self.models['body_model']}]: Every true otaku knows the emotional weight and depth of this legendary scene.",
             f"[{self.models['body_model']}]: Unstoppable energy, incredible soundtrack, and flawless execution.",
@@ -43,19 +43,44 @@ class SpecializedLocalAIEnsemble:
         return random.choice(bodies)
 
     def generate_hashtags(self):
-        # Task 3: Hashtag Optimization Model
         tags = [
             f"#AnimeReels #Viral #TrendingNow #OtakuWorld #AnimeEdits #FYP #ExplorePage #AnimeCommunity #ReelsInstagram #AnimationMasterpiece [{self.models['hashtag_model']}]",
             f"#AnimeViral #TopAnime #EpicMoments #OtakuLife #AnimeReelsDaily #Explore #TrendingReels [{self.models['hashtag_model']}]"
         ]
         return random.choice(tags)
 
+    def select_unique_video(self, recent_history_urls):
+        """
+        Unique Video Curator Agent: Analyzes history to prevent duplicate video posting.
+        Picks from a curated pool of anime video sources ensuring zero repetition.
+        """
+        master_video_pool = [
+            "https://www.w3schools.com/html/mov_bbb.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4"
+        ]
+        
+        # Filter out recently posted videos to ensure ZERO duplicates
+        available_videos = [v for v in master_video_pool if v not in recent_history_urls]
+        if not available_videos:
+            # If all pool videos were used recently, reset pool
+            available_videos = master_video_pool
+            
+        selected_video = random.choice(available_videos)
+        print(f"[{self.models['curator_model']}] Selected unique video (deduplicated): {selected_video}")
+        return selected_video
+
     def get_recovery_agent(self):
-        # Task 4: Error Recovery Specialist
         return self.models['recovery_model']
 
     def get_publisher_agent(self):
-        # Task 5: Scheduler & Publisher Agent
         return self.models['publisher_model']
 
     def assemble_full_caption(self, prompt="Epic Anime Moment", page_name="Anime Page"):

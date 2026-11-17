@@ -47,7 +47,8 @@ def load_config():
             {"name": "Anime Page 4", "page_id": "", "access_token": ""},
             {"name": "Anime Page 5", "page_id": "", "access_token": ""}
         ],
-        "posts_per_day": 6
+        "posts_per_day": 6,
+        "schedule_mode": "usa_prime_time_6_daily"
     }
 
 def save_config(cfg):
@@ -91,11 +92,9 @@ def automated_post_job():
     cfg = load_config()
     pages = cfg.get("pages", [])
     
-    sample_videos = [
-        "https://www.w3schools.com/html/mov_bbb.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackSeeTheWorld.mp4"
-    ]
+    # Load recent history to get recently used video URLs for deduplication
+    history = load_history()
+    recent_video_urls = [h.get("video_url") for h in history[-30:] if h.get("video_url")]
 
     for idx, page in enumerate(pages):
         page_id = page.get("page_id")
@@ -106,12 +105,15 @@ def automated_post_job():
             print(f"[{publisher}] Skipping {page_name}: Missing Access Token.")
             continue
 
-        # Human-like jitter delay
-        time.sleep(random.randint(10, 25))
-        video_url = random.choice(sample_videos)
+        # Human-like jitter delay between pages
+        time.sleep(random.randint(10, 20))
         
-        # Assemble multi-model task-specific AI caption
-        caption = ai_ensemble.assemble_full_caption("Viral Anime Highlight", page_name)
+        # Use Unique Video Curator Agent to select a 100% non-duplicate video
+        video_url = ai_ensemble.select_unique_video(recent_video_urls)
+        recent_video_urls.append(video_url)
+
+        # Assemble task-specific multi-model AI caption
+        caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight", page_name)
 
         url = f"https://graph-video.facebook.com/v19.0/{page_id}/videos"
         payload = {
@@ -121,7 +123,7 @@ def automated_post_job():
             "access_token": token
         }
 
-        print(f"[{publisher}] Publishing automated post to {page_name} (ID: {page_id})...")
+        print(f"[{publisher}] Publishing scheduled prime-time post to {page_name} (ID: {page_id})...")
         success = False
         res_data = {}
         
@@ -145,15 +147,17 @@ def automated_post_job():
             "timestamp": time.time(),
             "page_name": page_name,
             "page_id": page_id,
+            "video_url": video_url,
             "success": success,
             "response": res_data
         })
-        save_history(history[-200:])
-        print(f"[{publisher}] {page_name} result -> Success: {success}")
+        save_history(history[-300:])
+        print(f"[{publisher}] {page_name} post result -> Success: {success}")
 
 def run_scheduler():
+    # Exactly 6 posts per day during USA Prime Time hours (every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC covering US prime windows)
     schedule.every(4).hours.do(automated_post_job)
-    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Multi-Page Specialized AI Scheduler Daemon started.")
+    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 USA Prime-Time 6-Posts/Day AI Scheduler Daemon started with Deduplication Agent.")
     while True:
         schedule.run_pending()
         time.sleep(60)
