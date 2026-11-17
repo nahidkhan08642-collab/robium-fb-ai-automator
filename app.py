@@ -7,19 +7,19 @@ import threading
 import schedule
 import redis
 from flask import Flask, render_template, request, jsonify
-from local_ai_ensemble import LocalAIEnsemble
+from local_ai_ensemble import SpecializedLocalAIEnsemble
 
 app = Flask(__name__)
-ai_engine = LocalAIEnsemble()
+ai_ensemble = SpecializedLocalAIEnsemble()
 
-# Redis configuration from user
+# Redis configuration
 REDIS_URL = os.environ.get("REDIS_URL", "redis://red-dbtu9ap42hec73b1dgc0:6379")
 try:
     redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
     redis_client.ping()
-    print("[REDIS] Connected successfully to Redis database!")
+    print(f"[{ai_ensemble.get_publisher_agent()}] Connected successfully to Redis database!")
 except Exception as e:
-    print(f"[REDIS] Warning: Could not connect to Redis: {e}")
+    print(f"[{ai_ensemble.get_recovery_agent()}] Warning: Redis unavailable, using local JSON fallback: {e}")
     redis_client = None
 
 CONFIG_PATH = os.path.expanduser("~/.fb_ai_automator_config.json")
@@ -47,7 +47,6 @@ def load_config():
             {"name": "Anime Page 4", "page_id": "", "access_token": ""},
             {"name": "Anime Page 5", "page_id": "", "access_token": ""}
         ],
-        "ai_model": "Local-Multi-Model-Ensemble",
         "posts_per_day": 6
     }
 
@@ -87,6 +86,8 @@ def save_history(history):
         pass
 
 def automated_post_job():
+    publisher = ai_ensemble.get_publisher_agent()
+    recovery = ai_ensemble.get_recovery_agent()
     cfg = load_config()
     pages = cfg.get("pages", [])
     
@@ -102,12 +103,15 @@ def automated_post_job():
         page_name = page.get("name", f"Anime Page {idx+1}")
 
         if not token or not page_id:
-            print(f"[DAEMON] Skipping {page_name} ({page_id}): Missing Access Token.")
+            print(f"[{publisher}] Skipping {page_name}: Missing Access Token.")
             continue
 
+        # Human-like jitter delay
         time.sleep(random.randint(10, 25))
         video_url = random.choice(sample_videos)
-        caption = ai_engine.generate_caption("Viral Anime Highlight", page_name)
+        
+        # Assemble multi-model task-specific AI caption
+        caption = ai_ensemble.assemble_full_caption("Viral Anime Highlight", page_name)
 
         url = f"https://graph-video.facebook.com/v19.0/{page_id}/videos"
         payload = {
@@ -117,9 +121,11 @@ def automated_post_job():
             "access_token": token
         }
 
-        print(f"[DAEMON] Publishing automated 24/7 post to {page_name} (ID: {page_id})...")
+        print(f"[{publisher}] Publishing automated post to {page_name} (ID: {page_id})...")
         success = False
         res_data = {}
+        
+        # Self-healing auto-retry loop (Recovery Agent)
         for attempt in range(3):
             try:
                 res = requests.post(url, data=payload, timeout=60)
@@ -128,9 +134,10 @@ def automated_post_job():
                     success = True
                     break
                 else:
+                    print(f"[{recovery}] Attempt {attempt+1} failed for {page_name}: {res_data}")
                     time.sleep(2 ** attempt)
             except Exception as e:
-                print(f"[DAEMON] Error posting to {page_name}: {e}")
+                print(f"[{recovery}] Exception on attempt {attempt+1} for {page_name}: {e}")
                 time.sleep(2 ** attempt)
 
         history = load_history()
@@ -142,11 +149,11 @@ def automated_post_job():
             "response": res_data
         })
         save_history(history[-200:])
-        print(f"[DAEMON] {page_name} post result -> Success: {success}, Response: {res_data}")
+        print(f"[{publisher}] {page_name} result -> Success: {success}")
 
 def run_scheduler():
     schedule.every(4).hours.do(automated_post_job)
-    print("24/7 Multi-Page Local AI Ensemble Scheduler Daemon started.")
+    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Multi-Page Specialized AI Scheduler Daemon started.")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -173,7 +180,7 @@ def api_generate_ai_caption():
     data = request.json or {}
     prompt = data.get('prompt', 'Viral Anime Moment')
     page_name = data.get('page_name', 'Anime Page')
-    caption = ai_engine.generate_caption(prompt, page_name)
+    caption = ai_ensemble.assemble_full_caption(prompt, page_name)
     return jsonify({"status": "success", "caption": caption})
 
 @app.route('/api/post-video', methods=['POST'])
@@ -183,7 +190,7 @@ def api_post_video():
     pages = cfg.get('pages', [])
     page_index = data.get('page_index', 0)
     video_url = data.get('video_url', '')
-    caption = data.get('caption', ai_engine.generate_caption())
+    caption = data.get('caption', ai_ensemble.assemble_full_caption())
 
     if not pages or page_index >= len(pages):
         return jsonify({"status": "error", "message": "Invalid page index or configuration!"}), 400
