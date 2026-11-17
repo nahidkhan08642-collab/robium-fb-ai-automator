@@ -41,7 +41,11 @@ def load_config():
             pass
     return {
         "pages": [
-            {"name": "Anime Page 1", "page_id": "1237613292776083", "access_token": ""},
+            {
+                "name": "Robiul Islam (Anime Main)", 
+                "page_id": "1237613292776083", 
+                "access_token": "EAAV6Q3eZBaxgBSbVHPqvXCqTkXnOuZAw9Fxf4NfzgyVv0C3pjs4CDPzj4ulasREx1QdCrMRn8jlsscMcEh0vMLmMmHgiYEXKuvkg3m77kUJJCSNDJf7IZAGbzxbirshephFAZCBTI1rmvYIRNq7vXG9ZAyfLDJViCEZBA40gDcyJvvJEFTI7qGJIu2vZAXOj7f8CMMLJZBJ9"
+            },
             {"name": "Anime Page 2", "page_id": "", "access_token": ""},
             {"name": "Anime Page 3", "page_id": "", "access_token": ""},
             {"name": "Anime Page 4", "page_id": "", "access_token": ""},
@@ -93,7 +97,6 @@ def weekly_storage_cleanup():
     """
     print("[STORAGE-CLEANUP-AGENT] Running weekly storage cleanup (Friday 12:30 AM)...")
     history = load_history()
-    # Keep only the latest 50 entries to keep storage minimal and lightning fast
     if len(history) > 50:
         trimmed = history[-50:]
         save_history(trimmed)
@@ -164,12 +167,8 @@ def automated_post_job():
         print(f"[{publisher}] {page_name} post result -> Success: {success}")
 
 def run_scheduler():
-    # 6 posts per day during USA Prime Time (every 4 hours)
     schedule.every(4).hours.do(automated_post_job)
-    
-    # Weekly storage cleanup every Friday at 12:30 AM (00:30)
     schedule.every().friday.at("00:30").do(weekly_storage_cleanup)
-    
     print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Weekly Storage Cleanup Daemon started.")
     while True:
         schedule.run_pending()
