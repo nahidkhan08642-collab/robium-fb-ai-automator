@@ -86,13 +86,27 @@ def save_history(history):
     except:
         pass
 
+def weekly_storage_cleanup():
+    """
+    Weekly Storage Cleanup Agent: Runs every Friday at 12:30 AM
+    to purge old logs and keep storage 100% clean.
+    """
+    print("[STORAGE-CLEANUP-AGENT] Running weekly storage cleanup (Friday 12:30 AM)...")
+    history = load_history()
+    # Keep only the latest 50 entries to keep storage minimal and lightning fast
+    if len(history) > 50:
+        trimmed = history[-50:]
+        save_history(trimmed)
+        print(f"[STORAGE-CLEANUP-AGENT] Cleaned old history logs. Retained latest {len(trimmed)} records.")
+    else:
+        print("[STORAGE-CLEANUP-AGENT] Storage is already clean.")
+
 def automated_post_job():
     publisher = ai_ensemble.get_publisher_agent()
     recovery = ai_ensemble.get_recovery_agent()
     cfg = load_config()
     pages = cfg.get("pages", [])
     
-    # Load recent history to get recently used video URLs for deduplication
     history = load_history()
     recent_video_urls = [h.get("video_url") for h in history[-30:] if h.get("video_url")]
 
@@ -105,14 +119,10 @@ def automated_post_job():
             print(f"[{publisher}] Skipping {page_name}: Missing Access Token.")
             continue
 
-        # Human-like jitter delay between pages
         time.sleep(random.randint(10, 20))
-        
-        # Use Unique Video Curator Agent to select a 100% non-duplicate video
         video_url = ai_ensemble.select_unique_video(recent_video_urls)
         recent_video_urls.append(video_url)
 
-        # Assemble task-specific multi-model AI caption
         caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight", page_name)
 
         url = f"https://graph-video.facebook.com/v19.0/{page_id}/videos"
@@ -127,7 +137,6 @@ def automated_post_job():
         success = False
         res_data = {}
         
-        # Self-healing auto-retry loop (Recovery Agent)
         for attempt in range(3):
             try:
                 res = requests.post(url, data=payload, timeout=60)
@@ -151,13 +160,17 @@ def automated_post_job():
             "success": success,
             "response": res_data
         })
-        save_history(history[-300:])
+        save_history(history[-200:])
         print(f"[{publisher}] {page_name} post result -> Success: {success}")
 
 def run_scheduler():
-    # Exactly 6 posts per day during USA Prime Time hours (every 4 hours: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC covering US prime windows)
+    # 6 posts per day during USA Prime Time (every 4 hours)
     schedule.every(4).hours.do(automated_post_job)
-    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 USA Prime-Time 6-Posts/Day AI Scheduler Daemon started with Deduplication Agent.")
+    
+    # Weekly storage cleanup every Friday at 12:30 AM (00:30)
+    schedule.every().friday.at("00:30").do(weekly_storage_cleanup)
+    
+    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Weekly Storage Cleanup Daemon started.")
     while True:
         schedule.run_pending()
         time.sleep(60)
