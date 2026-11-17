@@ -104,19 +104,27 @@ def save_history(history):
     except:
         pass
 
-def weekly_storage_cleanup():
+def weekly_storage_cleanup_and_ai_audit():
     """
-    Weekly Storage Cleanup Agent: Runs every Friday at 12:30 AM
-    to purge old logs and keep storage 100% clean.
+    Weekly Storage Cleanup & AI Model Health Audit Agent:
+    Runs every Friday at 12:30 AM.
+    1. Purges old storage logs.
+    2. Runs comprehensive health audit across all 60 AI models (10 per task) with self-healing failovers.
     """
-    print("[STORAGE-CLEANUP-AGENT] Running weekly storage cleanup (Friday 12:30 AM)...")
+    print("[STORAGE-CLEANUP & AI-AUDIT] Running Friday 12:30 AM maintenance task...")
+    
+    # 1. Storage cleanup
     history = load_history()
     if len(history) > 50:
         trimmed = history[-50:]
         save_history(trimmed)
-        print(f"[STORAGE-CLEANUP-AGENT] Cleaned old history logs. Retained latest {len(trimmed)} records.")
+        print(f"[STORAGE-CLEANUP] Cleaned old history logs. Retained latest {len(trimmed)} records.")
     else:
-        print("[STORAGE-CLEANUP-AGENT] Storage is already clean.")
+        print("[STORAGE-CLEANUP] Storage is already clean.")
+        
+    # 2. AI Model Health Audit & Self-Healing
+    ai_ensemble.audit_all_ai_models()
+    print("[STORAGE-CLEANUP & AI-AUDIT] Friday maintenance completed successfully.")
 
 def automated_post_job():
     publisher = ai_ensemble.get_publisher_agent()
@@ -142,9 +150,9 @@ def automated_post_job():
             print(f"[{publisher}] Skipping {page_name}: Missing Access Token.")
             continue
 
-        # Run Growth & Engagement Analytics Optimizer for this page before posting
+        # Run Growth & Engagement Analytics Optimizer backed by 10 redundant AI models
         growth_analysis = ai_ensemble.analyze_and_optimize_growth(page_name, history[-10:])
-        print(f"[{growth_analysis['model_used']}] Growth strategy optimized for {page_name}.")
+        print(f"[{growth_analysis['model_used']}] Reach & Engagement growth strategy optimized for {page_name}.")
 
         time.sleep(random.randint(10, 20))
         video_url = ai_ensemble.select_unique_video(recent_video_urls, sample_videos)
@@ -192,8 +200,8 @@ def automated_post_job():
 
 def run_scheduler():
     schedule.every(4).hours.do(automated_post_job)
-    schedule.every().friday.at("00:30").do(weekly_storage_cleanup)
-    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Weekly Storage Cleanup Daemon started with 10-Model AI Ensembles.")
+    schedule.every().friday.at("00:30").do(weekly_storage_cleanup_and_ai_audit)
+    print(f"[{ai_ensemble.get_publisher_agent()}] 24/7 Scheduler & Friday AI Audit Daemon started with 60 specialized AI models (10 per task).")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -212,7 +220,7 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & Growth AI configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 10-Model AI Redundancy configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
