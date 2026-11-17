@@ -106,12 +106,12 @@ def save_history(history):
 
 def weekly_storage_cleanup_and_ai_audit():
     """
-    Weekly Storage Cleanup & 90-Model AI Health Audit & Self-Healing Agent:
+    Weekly Storage Cleanup & 100-Model AI Health Audit & Self-Healing Agent:
     Runs every Friday at 12:30 AM.
     1. Purges old storage logs.
-    2. Runs comprehensive health audit across all 90 AI models (10 per task step).
+    2. Runs comprehensive health audit across all 100 AI models (10 per category).
     """
-    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 90-Model AI Health Audit...")
+    print("[MAINTENANCE] Running Friday 12:30 AM Storage Cleanup & 100-Model AI Health Audit...")
     
     # 1. Storage cleanup
     history = load_history()
@@ -122,7 +122,7 @@ def weekly_storage_cleanup_and_ai_audit():
     else:
         print("[STORAGE-CLEANUP] Storage is already clean.")
         
-    # 2. AI Model Health Audit & Self-Healing across 90 models
+    # 2. AI Model Health Audit & Self-Healing across 100 models
     audit_res = ai_ensemble.audit_health_and_self_heal()
     print(f"[AI-HEALTH-AUDIT] {audit_res}")
     print("[MAINTENANCE] Friday maintenance completed successfully.")
@@ -131,7 +131,7 @@ def automated_post_job():
     """
     Automated execution job: Runs every 4 hours (6 posts per day per page)
     during USA Prime-Time windows, strictly for Anime videos in English,
-    utilizing 10-model redundancy per step, deduplication, and growth analytics.
+    utilizing 10-model redundancy across all 10 task categories (100 total models).
     """
     cfg = load_config()
     pages = cfg.get("pages", [])
@@ -154,28 +154,31 @@ def automated_post_job():
             print(f"[Publisher] Skipping {page_name}: Missing Access Token.")
             continue
 
+        # Step 0: Schedule & Timing Management (10 models)
+        ai_ensemble.manage_schedule_timing()
+
         # Step 1: Growth Analytics Optimization (10 models)
         ai_ensemble.analyze_growth_metrics(page_name, history[-10:])
 
-        # Step 2: Video Scouting & Selection (10 models)
+        # Step 2: Video Sourcing (10 models)
         video_url = ai_ensemble.scout_anime_video(sample_anime_videos)
 
-        # Step 3: Anti-Duplicate Video Analysis (10 models)
+        # Step 3: Duplicate Prevention Analysis (10 models)
         is_dup = ai_ensemble.analyze_deduplication(video_url, recent_video_urls)
         if is_dup:
-            print(f"[Deduplication] Video URL already posted recently. Selecting alternate anime asset...")
+            print(f"[Duplicate-Prevention] Video URL already posted recently. Selecting alternate anime asset...")
             video_url = ai_ensemble.scout_anime_video(sample_anime_videos)
 
         recent_video_urls.append(video_url)
 
-        # Step 4, 5, 6: Title, Caption & Hashtag Generation in English (10 models per step)
+        # Step 4, 5, 6: Title, Caption & Mention (@), and Hashtags in English (10 models per step)
         full_caption = ai_ensemble.assemble_full_caption("USA Prime-Time Viral Anime Highlight")
 
-        # Step 7: Publishing Execution (10 models)
+        # Step 7: Publisher Execution (10 models)
         time.sleep(random.randint(10, 20))
         res_data = ai_ensemble.execute_publishing(page_id, token, video_url, full_caption)
 
-        # Step 8: Post Success Verification (10 models)
+        # Step 8: Post Verification (10 models)
         success = ai_ensemble.verify_post_success(res_data)
 
         history = load_history()
@@ -195,7 +198,7 @@ def run_scheduler():
     schedule.every(4).hours.do(automated_post_job)
     # Weekly Friday 12:30 AM maintenance
     schedule.every().friday.at("00:30").do(weekly_storage_cleanup_and_ai_audit)
-    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 90 specialized AI models (10 per granular task step).")
+    print("[Scheduler-Master] 24/7 Scheduler & Friday AI Audit Daemon started with 100 specialized AI models (10 per task category).")
     while True:
         schedule.run_pending()
         time.sleep(60)
@@ -214,7 +217,7 @@ def api_save_config():
     if 'pages' in data:
         cfg['pages'] = data['pages']
     if save_config(cfg):
-        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 90-Model AI configuration saved successfully!"})
+        return jsonify({"status": "success", "message": "All 5 Permanent Anime Pages & 100-Model AI configuration saved successfully!"})
     return jsonify({"status": "error", "message": "Failed to save configuration."}), 500
 
 @app.route('/api/generate-ai-caption', methods=['POST'])
