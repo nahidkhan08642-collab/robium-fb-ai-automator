@@ -8,9 +8,11 @@ import schedule
 import redis
 from flask import Flask, render_template, request, jsonify
 from local_ai_ensemble import SpecializedLocalAIEnsemble
+from social_media_automation_engine import SocialMediaAutomationEngine
 
 app = Flask(__name__)
 ai_ensemble = SpecializedLocalAIEnsemble()
+social_engine = SocialMediaAutomationEngine()
 
 # Redis configuration
 REDIS_URL = os.environ.get("REDIS_URL", "redis://red-dbtu9ap42hec73b1dgc0:6379")
@@ -146,7 +148,14 @@ def automated_post_job():
             print(f"[Publisher] Skipping {page_name}: Missing Access Token.")
             continue
 
-        # Step 0: Schedule & Timing Management (10 models)
+                # Integrated Social Media Automation Engine Modules (50+ AI Models)
+        res_research = social_engine.run_hyperresearch_module(page_name)
+        res_competitor = social_engine.run_competitor_analysis_module("Anime & Viral Content")
+        res_video_gen = social_engine.run_video_generation_and_editing_module("Viral Anime Highlight")
+        res_orchestrator = social_engine.run_auto_agent_orchestrator("Multi-Platform Autonomous Publishing")
+        print(f"[SocialEngine-50Models] Research, Competitor & Orchestrator synced for {page_name}")
+
+# Step 0: Schedule & Timing Management (10 models)
         ai_ensemble.manage_schedule_timing()
 
         # Step 1: Growth Analytics Optimization (10 models)
@@ -180,6 +189,10 @@ def automated_post_job():
 
         # Step 8: Post Verification (10 models)
         success = ai_ensemble.verify_post_success(res_data)
+
+                # Run Self-Healing Diagnostic Engine
+        self_healing_res = social_engine.run_self_healing_diagnostic({"page": page_name, "success": success})
+        print(f"[{self_healing_res["model_used"]}] Diagnostic Status: {self_healing_res["diagnostic_status"]}")
 
         post_result_record = {
             "timestamp": time.time(),
