@@ -24,21 +24,17 @@ except Exception as e:
 
 CONFIG_PATH = os.path.expanduser("~/.fb_ai_automator_config.json")
 HISTORY_PATH = os.path.expanduser("~/.fb_ai_automator_history.json")
-TOKENS_JSON_PATH = os.path.expanduser("~/permanent_page_tokens.json")
+TOKENS_JSON_PATH = os.path.expanduser("saved_page_tokens.json")
 
 def load_default_pages():
     if os.path.exists(TOKENS_JSON_PATH):
         try:
             with open(TOKENS_JSON_PATH, "r") as f:
                 data = json.load(f)
-                pages = []
-                for pid, info in data.items():
-                    pages.append({
-                        "name": info.get("name", "Anime Page"),
-                        "page_id": pid,
-                        "access_token": info.get("permanent_token", "")
-                    })
-                return pages
+                if isinstance(data, dict) and "pages" in data:
+                    return data["pages"]
+                elif isinstance(data, list):
+                    return data
         except:
             pass
     return [
