@@ -8,10 +8,12 @@ import schedule
 import redis
 from flask import Flask, render_template, request, jsonify
 from local_ai_ensemble import SpecializedLocalAIEnsemble
+from monetization_optimizer import MonetizationOptimizer
 from social_media_automation_engine import SocialMediaAutomationEngine
 
 app = Flask(__name__)
 ai_ensemble = SpecializedLocalAIEnsemble()
+monetization_optimizer = MonetizationOptimizer()
 social_engine = SocialMediaAutomationEngine()
 
 # Redis configuration
@@ -185,6 +187,9 @@ def automated_post_job():
 
         # Step 7: Publisher Execution (10 models)
         time.sleep(random.randint(10, 20))
+        mon_res = monetization_optimizer.optimize_post_for_monetization(page_name, full_caption)
+        full_caption = mon_res["optimized_caption"]
+        print(f"[{mon_res["model_used"]}] Monetization Status: {mon_res["monetization_status"]}")
         res_data = ai_ensemble.execute_publishing(page_id, token, video_url, full_caption)
 
         # Step 8: Post Verification (10 models)
