@@ -189,7 +189,7 @@ def automated_post_job():
         time.sleep(random.randint(10, 20))
         mon_res = monetization_optimizer.optimize_post_for_monetization(page_name, full_caption)
         full_caption = mon_res["optimized_caption"]
-        print(f"[{mon_res["model_used"]}] Monetization Status: {mon_res["monetization_status"]}")
+        print(f"[{mon_res['model_used']}] Monetization Status: {mon_res['monetization_status']}")
         res_data = ai_ensemble.execute_publishing(page_id, token, video_url, full_caption)
 
         # Step 8: Post Verification (10 models)
@@ -197,7 +197,7 @@ def automated_post_job():
 
                 # Run Self-Healing Diagnostic Engine
         self_healing_res = social_engine.run_self_healing_diagnostic({"page": page_name, "success": success})
-        print(f"[{self_healing_res["model_used"]}] Diagnostic Status: {self_healing_res["diagnostic_status"]}")
+        print(f"[{self_healing_res['model_used']}] Diagnostic Status: {self_healing_res['diagnostic_status']}")
 
         post_result_record = {
             "timestamp": time.time(),
